@@ -85,7 +85,7 @@ cp .env.example .env
 python main.py
 ```
 
-The server will start on `http://localhost:8000` (or your configured HOST:PORT).
+The server will start on `http://localhost:8500` (or your configured HOST:PORT).
 
 ## API Endpoints
 
@@ -130,7 +130,7 @@ OpenAI-compatible speech generation endpoint.
 ### Using cURL
 
 ```bash
-curl -X POST http://localhost:8000/v1/audio/speech \
+curl -X POST http://localhost:8500/v1/audio/speech \
   -H "Content-Type: application/json" \
   -d '{
     "model": "mimo-v2-tts",
@@ -148,7 +148,7 @@ from openai import OpenAI
 
 client = OpenAI(
     api_key="local-server-no-key-needed",
-    base_url="http://localhost:8000/v1"
+    base_url="http://localhost:8500/v1"
 )
 
 response = client.audio.speech.create(

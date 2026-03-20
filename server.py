@@ -12,7 +12,7 @@ API Endpoint:
     POST /v1/audio/speech
 
 Example request:
-    curl -X POST http://localhost:8000/v1/audio/speech \
+    curl -X POST http://localhost:8500/v1/audio/speech \
       -H "Authorization: Bearer any-api-key" \
       -H "Content-Type: application/json" \
       -d '{
@@ -86,11 +86,11 @@ class SpeechRequest(BaseModel):
         max_length=4096
     )
     voice: str = Field(
-        default="mimo_default",
+        default="default_zh",
         description="The voice to use for generation"
     )
     response_format: Literal["mp3", "opus", "aac", "flac", "wav", "pcm"] = Field(
-        default="wav",
+        default="mp3",
         description="The format of the audio output"
     )
     speed: float = Field(
@@ -100,7 +100,7 @@ class SpeechRequest(BaseModel):
         description="The speed of the generated audio"
     )
     style: Optional[str] = Field(
-        default=None,
+        default="粵語",
         description="Speaking style (e.g., '粵語' for Cantonese)"
     )
 
@@ -166,9 +166,6 @@ async def create_speech(
         
         if request.style:
             text_to_speak = f"[style:{request.style}]{request.input}"
-            # Use default_zh voice for Chinese styles for better pronunciation
-            if request.style in ("粵語", "广东话", "廣東話", "广州话") and voice == "mimo_default":
-                voice = "default_zh"
         
         messages = [
             {
@@ -301,7 +298,7 @@ if __name__ == "__main__":
     import uvicorn
     
     host = os.getenv("HOST", "0.0.0.0")
-    port = int(os.getenv("PORT", 8000))
+    port = int(os.getenv("PORT", 8500))
     
     print(f"""
 ╔══════════════════════════════════════════════════════════════╗

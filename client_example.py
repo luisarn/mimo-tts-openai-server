@@ -11,7 +11,7 @@ from openai import OpenAI
 # Configure the client to use the local server
 client = OpenAI(
     api_key="local-server-no-key-needed",  # The local server doesn't validate this
-    base_url="http://localhost:8000/v1"
+    base_url="http://localhost:8500/v1"
 )
 
 def text_to_speech_simple():

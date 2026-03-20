@@ -14,7 +14,7 @@ from openai import OpenAI
 # Configure client
 client = OpenAI(
     api_key="local-server-no-key-needed",
-    base_url="http://localhost:8000/v1"
+    base_url="http://localhost:8500/v1"
 )
 
 # Common Cantonese phrases for testing
@@ -92,13 +92,13 @@ def play_audio(file_path):
         return False
 
 
-def generate_speech(text, output_file, voice="mimo_default", format="wav", style=None):
+def generate_speech(text, output_file, voice="mimo_default", format="mp3", style=None):
     """Generate speech using the local TTS server."""
     try:
         # Use raw HTTP request to support extra parameters like 'style'
         import httpx
         response = httpx.post(
-            "http://localhost:8000/v1/audio/speech",
+            "http://localhost:8500/v1/audio/speech",
             json={
                 "model": "mimo-v2-tts",
                 "input": text,
@@ -121,7 +121,7 @@ def test_single_phrase(phrase, output_dir="test_output", auto_play=True, style=N
     """Test a single Cantonese phrase."""
     os.makedirs(output_dir, exist_ok=True)
     
-    output_file = os.path.join(output_dir, f"{phrase['name']}.wav")
+    output_file = os.path.join(output_dir, f"{phrase['name']}.mp3")
     
     print(f"\n📝 Phrase: {phrase['name']}")
     print(f"   Text: {phrase['text']}")
@@ -142,7 +142,7 @@ def test_single_phrase(phrase, output_dir="test_output", auto_play=True, style=N
         print("✗ Failed")
 
 
-def test_all_phrases(auto_play=True, style="广东话"):
+def test_all_phrases(auto_play=True, style="粤语 香港口音 开心热情 语速快"):
     """Test all Cantonese phrases."""
     output_dir = "test_output"
     os.makedirs(output_dir, exist_ok=True)
@@ -157,7 +157,7 @@ def test_all_phrases(auto_play=True, style="广东话"):
     print("\n📡 Checking server...", end=" ")
     try:
         import httpx
-        response = httpx.get("http://localhost:8000/health")
+        response = httpx.get("http://localhost:8500/health")
         if response.status_code == 200:
             print("✓ Server is healthy")
         else:
@@ -203,7 +203,7 @@ def interactive_mode():
             if not text:
                 continue
             
-            output_file = os.path.join(output_dir, f"custom_{counter:03d}.wav")
+            output_file = os.path.join(output_dir, f"custom_{counter:03d}.mp3")
             
             print(f"   Generating...", end=" ")
             if generate_speech(text, output_file):

@@ -34,18 +34,94 @@ cp .env.example .env
 
 ### 3. Start the Server
 
+Using `uv` (recommended):
 ```bash
-python main.py
+uv run uvicorn server:app --reload --host 0.0.0.0 --port 8500
 ```
 
-The server will start on `http://localhost:8000`.
+Or using Python directly:
+```bash
+python server.py
+```
+
+The server will start on `http://localhost:8500`.
+
+You should see output like:
+```
+INFO:     Uvicorn running on http://0.0.0.0:8500 (Press CTRL+C to quit)
+```
+
+### 4. Test the Server
+
+Health check:
+```bash
+curl http://localhost:8500/health
+```
+
+Test TTS generation:
+```bash
+curl -X POST http://localhost:8500/v1/audio/speech \
+  -H "Content-Type: application/json" \
+  -d '{"input": "Hello, world!"}' \
+  --output test.mp3
+```
+
+## 🖥️ Running the Server
+
+### Start the Server
+
+Using `uv` (recommended with auto-reload):
+```bash
+uv run uvicorn server:app --reload --host 0.0.0.0 --port 8500
+```
+
+Or using Python directly:
+```bash
+python server.py
+```
+
+By default, the server runs on `http://0.0.0.0:8500`. You can customize the host and port:
+
+```bash
+# Using uvicorn
+uv run uvicorn server:app --host 127.0.0.1 --port 8080
+
+# Or using environment variables
+HOST=127.0.0.1 PORT=8080 python server.py
+```
+
+### Server Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `GET /` | Server info | Server status and available endpoints |
+| `GET /health` | Health check | Check server and MiMo API connection |
+| `GET /v1/models` | List models | OpenAI-compatible models endpoint |
+| `POST /v1/audio/speech` | TTS | Text-to-speech generation (OpenAI-compatible) |
+| `POST /v1/chat/completions` | Chat | Direct proxy to MiMo chat completions |
+
+### Default Settings
+
+The `/v1/audio/speech` endpoint uses these defaults:
+
+```json
+{
+  "model": "mimo-v2-tts",
+  "voice": "default_zh",
+  "response_format": "mp3",
+  "speed": 1.0,
+  "style": "粵語"
+}
+```
+
+This means **Cantonese TTS is the default**. For English or other languages, you may want to use `voice: "mimo_default"`.
 
 ## 📖 Usage Examples
 
 ### English TTS
 
 ```bash
-curl -X POST http://localhost:8000/v1/audio/speech \
+curl -X POST http://localhost:8500/v1/audio/speech \
   -H "Content-Type: application/json" \
   -d '{
     "input": "Hello, world!",
@@ -57,7 +133,7 @@ curl -X POST http://localhost:8000/v1/audio/speech \
 ### Cantonese TTS (广东话)
 
 ```bash
-curl -X POST http://localhost:8000/v1/audio/speech \
+curl -X POST http://localhost:8500/v1/audio/speech \
   -H "Content-Type: application/json" \
   -d '{
     "input": "早晨，食咗飯未呀？",
@@ -69,19 +145,41 @@ curl -X POST http://localhost:8000/v1/audio/speech \
 
 ### Using Python (OpenAI SDK)
 
+The server is fully compatible with the official OpenAI Python SDK:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="any-key",  # Not validated locally
+    base_url="http://localhost:8500/v1"
+)
+
+# Generate speech (uses default Cantonese settings)
+response = client.audio.speech.create(
+    model="mimo-v2-tts",
+    voice="default_zh",
+    input="早晨，食咗飯未呀？"
+)
+
+response.stream_to_file("output.mp3")
+```
+
+Or using `httpx` for direct HTTP requests:
+
 ```python
 import httpx
 
 response = httpx.post(
-    "http://localhost:8000/v1/audio/speech",
+    "http://localhost:8500/v1/audio/speech",
     json={
         "input": "早晨，食咗飯未呀？",
-        "response_format": "wav",
-        "style": "广东话"  # Enable Cantonese
+        "response_format": "mp3",
+        "style": "粵語"  # Enable Cantonese
     }
 )
 
-with open("cantonese.wav", "wb") as f:
+with open("cantonese.mp3", "wb") as f:
     f.write(response.content)
 ```
 
@@ -116,17 +214,17 @@ with open("cantonese.wav", "wb") as f:
 |-----------|------|----------|-------------|
 | `model` | string | Yes | TTS model to use (default: `mimo-v2-tts`) |
 | `input` | string | Yes | Text to convert (max 4096 chars) |
-| `voice` | string | No | Voice identifier (default: `mimo_default`) |
-| `response_format` | string | No | Audio format: `mp3`, `opus`, `aac`, `flac`, `wav`, `pcm` (default: `wav`) |
+| `voice` | string | No | Voice identifier (default: `default_zh`) |
+| `response_format` | string | No | Audio format: `mp3`, `opus`, `aac`, `flac`, `wav`, `pcm` (default: `mp3`) |
 | `speed` | float | No | Playback speed 0.25-4.0 (default: `1.0`) |
-| `style` | string | No | Speaking style, e.g., `广东话` for Cantonese |
+| `style` | string | No | Speaking style, e.g., `粵語` for Cantonese (default: `粵語`) |
 
 ### Cantonese TTS
 
 To generate Cantonese speech, add the `style` parameter with value `广东话`:
 
 ```bash
-curl -X POST http://localhost:8000/v1/audio/speech \
+curl -X POST http://localhost:8500/v1/audio/speech \
   -H "Content-Type: application/json" \
   -d '{
     "model": "mimo-v2-tts",
@@ -138,7 +236,7 @@ curl -X POST http://localhost:8000/v1/audio/speech \
   --output cantonese.wav
 ```
 
-**Note:** When `style` is set to a Chinese dialect like `广东话` (Cantonese), the server automatically uses the `default_zh` voice for better pronunciation quality.
+**Note:** The server defaults to Cantonese TTS with `default_zh` voice and `粵語` style. For other languages, set `style` to `null` or use the `mimo_default` voice.
 
 Or using Python:
 
@@ -146,7 +244,7 @@ Or using Python:
 import httpx
 
 response = httpx.post(
-    "http://localhost:8000/v1/audio/speech",
+    "http://localhost:8500/v1/audio/speech",
     json={
         "model": "mimo-v2-tts",
         "input": "早晨，食咗飯未呀？",
